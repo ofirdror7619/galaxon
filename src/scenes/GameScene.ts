@@ -23,6 +23,7 @@ export class GameScene extends Phaser.Scene {
     private levelText!: Phaser.GameObjects.Text
     private speedBoostText!: Phaser.GameObjects.Text
     private pauseButtonText!: Phaser.GameObjects.Text
+    private soundButtonText!: Phaser.GameObjects.Text
     private countdownText?: Phaser.GameObjects.Text
     private pauseText?: Phaser.GameObjects.Text
     private spaceKey!: Phaser.Input.Keyboard.Key
@@ -34,6 +35,7 @@ export class GameScene extends Phaser.Scene {
     private lastShotAt = 0
     private isGameStarted = false
     private isPaused = false
+    private isSoundOn = true
     private readonly dropChance = 0.15
     private readonly lifeDropWeight = 0.2
     private readonly speedDropWeight = 0.55
@@ -67,6 +69,8 @@ export class GameScene extends Phaser.Scene {
         this.lastShotAt = -Infinity
         this.isGameStarted = false
         this.isPaused = false
+        this.isSoundOn = true
+        this.sound.mute = false
         this.pauseText?.destroy()
         this.pauseText = undefined
 
@@ -90,8 +94,9 @@ export class GameScene extends Phaser.Scene {
             fontSize: "22px",
             color: "#e2e8f0"
         }).setOrigin(0.5, 0)
-        this.createNewGameButton()
         this.createPauseButton()
+        this.createSoundButton()
+        this.createNewGameButton()
         this.levelText = this.add.text(this.scale.width - 24, this.playAreaHeight + 18, "", {
             fontFamily: "Orbitron, monospace",
             fontSize: "22px",
@@ -162,6 +167,7 @@ export class GameScene extends Phaser.Scene {
         }
 
         this.lastShotAt = this.time.now
+        this.playFireSound()
         const bulletY = this.player.y - this.player.displayHeight / 2
         const bulletSpeedMultiplier = this.speedBoostMultiplier
         const bulletCount = this.weaponBoostMultiplier
@@ -203,6 +209,7 @@ export class GameScene extends Phaser.Scene {
                 bullet.destroy()
                 enemy.destroy()
                 this.createExplosion(explosionX, explosionY)
+                this.playEnemyExplosionSound()
                 this.trySpawnPowerUp(explosionX, explosionY)
                 this.gameState.score += 10
                 this.updateHud()
@@ -269,6 +276,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private loseLife() {
+        this.playLifeLostExplosionSound()
         this.gameState.lives -= 1
         this.updateHud()
 
@@ -365,7 +373,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private createNewGameButton() {
-        const button = this.add.text(this.scale.width / 2 + 70, this.playAreaHeight + 52, "New Game", {
+        const button = this.add.text(this.scale.width / 2, this.playAreaHeight + 52, "New Game", {
             fontFamily: "Orbitron, monospace",
             fontSize: "18px",
             color: "#e2e8f0",
@@ -385,7 +393,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private createPauseButton() {
-        this.pauseButtonText = this.add.text(this.scale.width / 2 - 70, this.playAreaHeight + 52, "Pause Game", {
+        this.pauseButtonText = this.add.text(this.scale.width / 2 - 165, this.playAreaHeight + 52, "Pause Game", {
             fontFamily: "Orbitron, monospace",
             fontSize: "18px",
             color: "#e2e8f0",
@@ -402,6 +410,30 @@ export class GameScene extends Phaser.Scene {
         this.pauseButtonText.on("pointerover", () => this.pauseButtonText.setStyle({ backgroundColor: "#334155" }))
         this.pauseButtonText.on("pointerout", () => this.pauseButtonText.setStyle({ backgroundColor: "#1e293b" }))
         this.pauseButtonText.on("pointerdown", () => this.togglePause())
+    }
+
+    private createSoundButton() {
+        this.soundButtonText = this.add.text(this.scale.width / 2 + 165, this.playAreaHeight + 52, "Sound: On", {
+            fontFamily: "Orbitron, monospace",
+            fontSize: "18px",
+            color: "#e2e8f0",
+            backgroundColor: "#1e293b",
+            padding: {
+                left: 10,
+                right: 10,
+                top: 4,
+                bottom: 4
+            }
+        }).setOrigin(0.5, 0)
+
+        this.soundButtonText.setInteractive({ useHandCursor: true })
+        this.soundButtonText.on("pointerover", () => this.soundButtonText.setStyle({ backgroundColor: "#334155" }))
+        this.soundButtonText.on("pointerout", () => this.soundButtonText.setStyle({ backgroundColor: "#1e293b" }))
+        this.soundButtonText.on("pointerdown", () => {
+            this.isSoundOn = !this.isSoundOn
+            this.sound.mute = !this.isSoundOn
+            this.soundButtonText.setText(this.isSoundOn ? "Sound: On" : "Sound: Off")
+        })
     }
 
     private togglePause() {
@@ -480,6 +512,7 @@ export class GameScene extends Phaser.Scene {
 
         const updateCountdownText = () => {
             this.countdownText?.setText(`GAME STARTS IN\n${remaining}`)
+            this.playCountdownBeep(remaining)
         }
 
         updateCountdownText()
@@ -507,6 +540,7 @@ export class GameScene extends Phaser.Scene {
                     this.countdownText.destroy()
                 }
                 this.countdownText = undefined
+                this.playGameStartSound()
                 this.isGameStarted = true
             }
         })
@@ -533,12 +567,12 @@ export class GameScene extends Phaser.Scene {
 
     private createImpactExplosion(x: number, y: number) {
         const explosion = this.add.image(x, y, "impactExplosion")
-        explosion.setScale(0.22)
+        explosion.setScale(0.3)
         this.tweens.add({
             targets: explosion,
-            scale: 0.5,
+            scale: 0.9,
             alpha: 0,
-            duration: 170,
+            duration: 240,
             onComplete: () => explosion.destroy()
         })
     }
@@ -564,12 +598,14 @@ export class GameScene extends Phaser.Scene {
 
     private applyPowerUp(powerUpType: PowerUpType) {
         if (powerUpType === "L") {
+            this.playPowerUpSound("L")
             this.gameState.lives += 1
             this.updateHud()
             return
         }
 
         if (powerUpType === "S") {
+            this.playPowerUpSound("S")
             this.speedBoostMultiplier *= 2
             this.player.setSpeedMultiplier(this.speedBoostMultiplier)
             this.showSpeedBoostText()
@@ -583,6 +619,7 @@ export class GameScene extends Phaser.Scene {
             return
         }
 
+        this.playPowerUpSound("W")
         this.weaponBoostMultiplier *= 2
         this.weaponBoostResetEvent?.remove(false)
         this.weaponBoostResetEvent = this.time.delayedCall(8000, () => {
@@ -608,6 +645,227 @@ export class GameScene extends Phaser.Scene {
     private hideSpeedBoostText() {
         this.tweens.killTweensOf(this.speedBoostText)
         this.speedBoostText.setVisible(false)
+    }
+
+    private playFireSound() {
+        this.playTone("triangle", 920, 0.02, {
+            endFrequency: 540,
+            endGain: 0.0001,
+            duration: 0.06
+        })
+        this.playNoiseBurst({
+            duration: 0.045,
+            startGain: 0.016,
+            endGain: 0.0001,
+            filterType: "bandpass",
+            startFrequency: 1800,
+            endFrequency: 950
+        })
+    }
+
+    private playEnemyExplosionSound() {
+        this.playTone("sawtooth", 180, 0.03, {
+            endFrequency: 90,
+            endGain: 0.0001,
+            duration: 0.23
+        })
+        this.playNoiseBurst({
+            duration: 0.22,
+            startGain: 0.04,
+            endGain: 0.0001,
+            filterType: "lowpass",
+            startFrequency: 900,
+            endFrequency: 260
+        })
+        this.playTone("triangle", 320, 0.018, {
+            endFrequency: 120,
+            endGain: 0.0001,
+            duration: 0.2
+        })
+    }
+
+    private playLifeLostExplosionSound() {
+        this.playTone("sawtooth", 130, 0.055, {
+            endFrequency: 45,
+            endGain: 0.0001,
+            duration: 0.42
+        })
+        this.playNoiseBurst({
+            duration: 0.35,
+            startGain: 0.06,
+            endGain: 0.0001,
+            filterType: "lowpass",
+            startFrequency: 650,
+            endFrequency: 140
+        })
+        this.playTone("triangle", 220, 0.03, {
+            endFrequency: 80,
+            endGain: 0.0001,
+            duration: 0.34
+        })
+    }
+
+    private playPowerUpSound(powerUpType: PowerUpType) {
+        if (powerUpType === "L") {
+            this.playTone("sine", 520, 0.03, {
+                endFrequency: 860,
+                endGain: 0.0001,
+                duration: 0.18
+            })
+            this.playTone("sine", 760, 0.018, {
+                endFrequency: 1040,
+                endGain: 0.0001,
+                duration: 0.16
+            })
+            return
+        }
+
+        if (powerUpType === "S") {
+            this.playTone("triangle", 680, 0.026, {
+                endFrequency: 1140,
+                endGain: 0.0001,
+                duration: 0.2
+            })
+            this.playTone("sine", 900, 0.016, {
+                endFrequency: 1360,
+                endGain: 0.0001,
+                duration: 0.16
+            })
+            return
+        }
+
+        this.playTone("square", 430, 0.035, {
+            endFrequency: 930,
+            endGain: 0.0001,
+            duration: 0.2
+        })
+        this.playTone("triangle", 540, 0.018, {
+            endFrequency: 980,
+            endGain: 0.0001,
+            duration: 0.16
+        })
+    }
+
+    private playCountdownBeep(remaining: number) {
+        if (remaining <= 0) {
+            return
+        }
+
+        this.playTone("triangle", 760, 0.022, {
+            endFrequency: 720,
+            endGain: 0.0001,
+            duration: 0.12
+        })
+    }
+
+    private playGameStartSound() {
+        this.playTone("triangle", 2080, 0.022, {
+            endFrequency: 1960,
+            endGain: 0.0001,
+            duration: 0.12
+        })
+    }
+
+    private playNoiseBurst(options: {
+        duration: number
+        startGain: number
+        endGain: number
+        filterType: BiquadFilterType
+        startFrequency: number
+        endFrequency: number
+    }) {
+        if (!this.isSoundOn) {
+            return
+        }
+
+        const context = (this.sound as unknown as { context?: AudioContext }).context
+        if (!context) {
+            return
+        }
+
+        if (context.state === "suspended") {
+            void context.resume()
+        }
+
+        const sampleRate = context.sampleRate
+        const length = Math.max(1, Math.floor(sampleRate * options.duration))
+        const buffer = context.createBuffer(1, length, sampleRate)
+        const data = buffer.getChannelData(0)
+
+        for (let index = 0; index < length; index += 1) {
+            data[index] = Math.random() * 2 - 1
+        }
+
+        const source = context.createBufferSource()
+        const gain = context.createGain()
+        const filter = context.createBiquadFilter()
+        filter.type = options.filterType
+
+        const now = context.currentTime
+        source.buffer = buffer
+        filter.frequency.setValueAtTime(Math.max(20, options.startFrequency), now)
+        filter.frequency.exponentialRampToValueAtTime(
+            Math.max(20, options.endFrequency),
+            now + options.duration
+        )
+
+        gain.gain.setValueAtTime(Math.max(0.0001, options.startGain), now)
+        gain.gain.exponentialRampToValueAtTime(
+            Math.max(0.0001, options.endGain),
+            now + options.duration
+        )
+
+        source.connect(filter)
+        filter.connect(gain)
+        gain.connect(context.destination)
+        source.start(now)
+        source.stop(now + options.duration)
+    }
+
+    private playTone(
+        type: OscillatorType,
+        startFrequency: number,
+        startGain: number,
+        options: {
+            endFrequency: number
+            endGain: number
+            duration: number
+        }
+    ) {
+        if (!this.isSoundOn) {
+            return
+        }
+
+        const context = (this.sound as unknown as { context?: AudioContext }).context
+        if (!context) {
+            return
+        }
+
+        if (context.state === "suspended") {
+            void context.resume()
+        }
+
+        const now = context.currentTime
+        const oscillator = context.createOscillator()
+        const gain = context.createGain()
+
+        oscillator.type = type
+        oscillator.frequency.setValueAtTime(startFrequency, now)
+        oscillator.frequency.exponentialRampToValueAtTime(
+            Math.max(20, options.endFrequency),
+            now + options.duration
+        )
+
+        gain.gain.setValueAtTime(Math.max(0.0001, startGain), now)
+        gain.gain.exponentialRampToValueAtTime(
+            Math.max(0.0001, options.endGain),
+            now + options.duration
+        )
+
+        oscillator.connect(gain)
+        gain.connect(context.destination)
+        oscillator.start(now)
+        oscillator.stop(now + options.duration)
     }
 
     private getTightBounds(entity: BaseEntity, scale: number) {
