@@ -71,6 +71,8 @@ export class GameScene extends Phaser.Scene {
         this.pauseText = undefined
 
         this.playAreaHeight = this.scale.height - this.panelHeight
+        this.createSpaceBackdrop()
+        this.createGameWindowBorder()
         this.createControlPanel()
 
         this.player = new Player(this, 320, 0)
@@ -308,6 +310,58 @@ export class GameScene extends Phaser.Scene {
             0x0b1220
         )
         this.add.line(0, panelY, 0, 0, this.scale.width, 0, 0x38bdf8).setOrigin(0, 0)
+    }
+
+    private createSpaceBackdrop() {
+        this.add.rectangle(
+            this.scale.width / 2,
+            this.playAreaHeight / 2,
+            this.scale.width,
+            this.playAreaHeight,
+            0x020617
+        ).setDepth(-100)
+
+        const stars = this.add.graphics().setDepth(-90)
+
+        for (let index = 0; index < 80; index += 1) {
+            const x = Phaser.Math.Between(8, this.scale.width - 8)
+            const y = Phaser.Math.Between(8, this.playAreaHeight - 8)
+            const radius = Phaser.Math.FloatBetween(0.8, 2.1)
+            const alpha = Phaser.Math.FloatBetween(0.12, 0.28)
+
+            stars.fillStyle(0xe2e8f0, alpha)
+            stars.fillCircle(x, y, radius)
+
+            if (Math.random() < 0.25) {
+                stars.lineStyle(1, 0x93c5fd, alpha * 0.8)
+                stars.beginPath()
+                stars.moveTo(x - 3, y)
+                stars.lineTo(x + 3, y)
+                stars.moveTo(x, y - 3)
+                stars.lineTo(x, y + 3)
+                stars.strokePath()
+            }
+        }
+    }
+
+    private createGameWindowBorder() {
+        this.add.rectangle(
+            this.scale.width / 2,
+            this.playAreaHeight / 2,
+            this.scale.width - 2,
+            this.playAreaHeight - 2
+        )
+            .setStrokeStyle(3, 0x334155, 0.95)
+            .setDepth(40)
+
+        this.add.rectangle(
+            this.scale.width / 2,
+            this.playAreaHeight / 2,
+            this.scale.width - 8,
+            this.playAreaHeight - 8
+        )
+            .setStrokeStyle(1, 0x67e8f9, 0.35)
+            .setDepth(40)
     }
 
     private createNewGameButton() {
