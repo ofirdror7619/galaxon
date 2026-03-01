@@ -22,7 +22,9 @@ export class GameScene extends Phaser.Scene {
     private scoreText!: Phaser.GameObjects.Text
     private levelText!: Phaser.GameObjects.Text
     private speedBoostText!: Phaser.GameObjects.Text
+    private pauseButtonText!: Phaser.GameObjects.Text
     private countdownText?: Phaser.GameObjects.Text
+    private pauseText?: Phaser.GameObjects.Text
     private spaceKey!: Phaser.Input.Keyboard.Key
     private speedBoostResetEvent?: Phaser.Time.TimerEvent
     private weaponBoostResetEvent?: Phaser.Time.TimerEvent
@@ -31,6 +33,7 @@ export class GameScene extends Phaser.Scene {
     private readonly baseFireCooldownMs = 220
     private lastShotAt = 0
     private isGameStarted = false
+    private isPaused = false
     private readonly dropChance = 0.15
     private readonly lifeDropWeight = 0.2
     private readonly speedDropWeight = 0.55
@@ -63,6 +66,9 @@ export class GameScene extends Phaser.Scene {
         this.weaponBoostMultiplier = 1
         this.lastShotAt = -Infinity
         this.isGameStarted = false
+        this.isPaused = false
+        this.pauseText?.destroy()
+        this.pauseText = undefined
 
         this.playAreaHeight = this.scale.height - this.panelHeight
         this.createControlPanel()
@@ -83,6 +89,7 @@ export class GameScene extends Phaser.Scene {
             color: "#e2e8f0"
         }).setOrigin(0.5, 0)
         this.createNewGameButton()
+        this.createPauseButton()
         this.levelText = this.add.text(this.scale.width - 24, this.playAreaHeight + 18, "", {
             fontFamily: "Orbitron, monospace",
             fontSize: "22px",
@@ -112,7 +119,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     update(_time: number, delta: number) {
-        if (!this.isGameStarted || this.gameState.isGameOver) {
+        if (!this.isGameStarted || this.gameState.isGameOver || this.isPaused) {
             return
         }
 
@@ -304,7 +311,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private createNewGameButton() {
-        const button = this.add.text(this.scale.width / 2, this.playAreaHeight + 52, "New Game", {
+        const button = this.add.text(this.scale.width / 2 + 70, this.playAreaHeight + 52, "New Game", {
             fontFamily: "Orbitron, monospace",
             fontSize: "18px",
             color: "#e2e8f0",
@@ -321,6 +328,81 @@ export class GameScene extends Phaser.Scene {
         button.on("pointerover", () => button.setStyle({ backgroundColor: "#334155" }))
         button.on("pointerout", () => button.setStyle({ backgroundColor: "#1e293b" }))
         button.on("pointerdown", () => this.scene.restart())
+    }
+
+    private createPauseButton() {
+        this.pauseButtonText = this.add.text(this.scale.width / 2 - 70, this.playAreaHeight + 52, "Pause Game", {
+            fontFamily: "Orbitron, monospace",
+            fontSize: "18px",
+            color: "#e2e8f0",
+            backgroundColor: "#1e293b",
+            padding: {
+                left: 10,
+                right: 10,
+                top: 4,
+                bottom: 4
+            }
+        }).setOrigin(0.5, 0)
+
+        this.pauseButtonText.setInteractive({ useHandCursor: true })
+        this.pauseButtonText.on("pointerover", () => this.pauseButtonText.setStyle({ backgroundColor: "#334155" }))
+        this.pauseButtonText.on("pointerout", () => this.pauseButtonText.setStyle({ backgroundColor: "#1e293b" }))
+        this.pauseButtonText.on("pointerdown", () => this.togglePause())
+    }
+
+    private togglePause() {
+        if (!this.isGameStarted || this.gameState.isGameOver) {
+            return
+        }
+
+        this.isPaused = !this.isPaused
+        this.pauseButtonText.setText(this.isPaused ? "Resume Game" : "Pause Game")
+
+        if (this.isPaused) {
+            this.showPauseOverlay()
+            return
+        }
+
+        this.hidePauseOverlay()
+    }
+
+    private showPauseOverlay() {
+        if (!this.pauseText) {
+            this.pauseText = this.add.text(this.scale.width / 2, this.playAreaHeight / 2, "PAUSE", {
+                fontFamily: "Orbitron, monospace",
+                fontSize: "56px",
+                fontStyle: "bold",
+                color: "#22d3ee",
+                stroke: "#082f49",
+                strokeThickness: 8,
+                shadow: {
+                    color: "#67e8f9",
+                    offsetX: 0,
+                    offsetY: 0,
+                    blur: 14,
+                    fill: true
+                }
+            }).setOrigin(0.5).setDepth(100)
+        }
+
+        this.pauseText.setVisible(true)
+        this.tweens.killTweensOf(this.pauseText)
+        this.tweens.add({
+            targets: this.pauseText,
+            alpha: 0.35,
+            duration: 260,
+            yoyo: true,
+            repeat: -1
+        })
+    }
+
+    private hidePauseOverlay() {
+        if (!this.pauseText) {
+            return
+        }
+
+        this.tweens.killTweensOf(this.pauseText)
+        this.pauseText.setVisible(false)
     }
 
     private startGameCountdown() {
