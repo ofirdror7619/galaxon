@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <defs>
+    <radialGradient id="speedBall" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#bfdbfe"/>
+      <stop offset="60%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </radialGradient>
+  </defs>
+  <circle cx="48" cy="48" r="38" fill="url(#speedBall)" stroke="#172554" stroke-width="3"/>
+  <text x="48" y="60" text-anchor="middle" font-family="Orbitron, monospace" font-size="38" font-weight="700" fill="#eff6ff">S</text>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <radialGradient id="shockCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff1f2"/>
+      <stop offset="35%" stop-color="#fb7185"/>
+      <stop offset="70%" stop-color="#e11d48"/>
+      <stop offset="100%" stop-color="#7f1d1d"/>
+    </radialGradient>
+  </defs>
+
+  <circle cx="64" cy="64" r="22" fill="url(#shockCore)"/>
+
+  <path d="M64 8 L72 40 L64 34 L56 40 Z" fill="#fda4af"/>
+  <path d="M120 64 L88 72 L94 64 L88 56 Z" fill="#fda4af"/>
+  <path d="M64 120 L56 88 L64 94 L72 88 Z" fill="#fda4af"/>
+  <path d="M8 64 L40 56 L34 64 L40 72 Z" fill="#fda4af"/>
+
+  <path d="M24 24 L46 38 L36 40 L38 50 Z" fill="#fb7185"/>
+  <path d="M104 24 L82 38 L92 40 L90 50 Z" fill="#fb7185"/>
+  <path d="M104 104 L82 90 L92 88 L90 78 Z" fill="#fb7185"/>
+  <path d="M24 104 L46 90 L36 88 L38 78 Z" fill="#fb7185"/>
+</svg>

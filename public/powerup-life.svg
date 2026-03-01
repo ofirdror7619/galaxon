@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <defs>
+    <radialGradient id="lifeBall" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#bbf7d0"/>
+      <stop offset="60%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#166534"/>
+    </radialGradient>
+  </defs>
+  <circle cx="48" cy="48" r="38" fill="url(#lifeBall)" stroke="#052e16" stroke-width="3"/>
+  <text x="48" y="60" text-anchor="middle" font-family="Orbitron, monospace" font-size="38" font-weight="700" fill="#ecfdf5">L</text>
+</svg>

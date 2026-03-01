@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="nose" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="60%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#ef4444"/>
+    </linearGradient>
+  </defs>
+
+  <path d="M64 10 L78 30 L50 30 Z" fill="url(#nose)" stroke="#334155" stroke-width="2"/>
+
+  <rect x="50" y="28" width="28" height="62" rx="12" fill="url(#body)" stroke="#334155" stroke-width="2"/>
+
+  <path d="M50 56 L28 74 L50 78 Z" fill="url(#wing)" stroke="#0f172a" stroke-width="2"/>
+  <path d="M78 56 L100 74 L78 78 Z" fill="url(#wing)" stroke="#0f172a" stroke-width="2"/>
+
+  <rect x="58" y="78" width="12" height="18" rx="4" fill="#475569" stroke="#1e293b" stroke-width="2"/>
+
+  <circle cx="64" cy="46" r="7" fill="#0ea5e9" stroke="#082f49" stroke-width="2"/>
+
+  <path d="M58 96 L64 114 L70 96 Z" fill="url(#flame)"/>
+  <path d="M60 96 L64 106 L68 96 Z" fill="#fef3c7"/>
+</svg>
