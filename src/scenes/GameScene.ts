@@ -23,6 +23,7 @@ export class GameScene extends Phaser.Scene {
     private levelText!: Phaser.GameObjects.Text
     private powerUpTimersText!: Phaser.GameObjects.Text
     private speedBoostText!: Phaser.GameObjects.Text
+    private shieldArcGraphics!: Phaser.GameObjects.Graphics
     private pauseButtonText!: Phaser.GameObjects.Text
     private soundButtonText!: Phaser.GameObjects.Text
     private countdownText?: Phaser.GameObjects.Text
@@ -40,6 +41,7 @@ export class GameScene extends Phaser.Scene {
     private weaponBoostResetEvent?: Phaser.Time.TimerEvent
     private speedBoostMultiplier = 1
     private weaponBoostMultiplier = 1
+    private shieldCharges = 0
     private readonly baseFireCooldownMs = 220
     private lastShotAt = 0
     private isGameStarted = false
@@ -47,7 +49,8 @@ export class GameScene extends Phaser.Scene {
     private isSoundOn = true
     private readonly dropChance = 0.15
     private readonly lifeDropWeight = 0.2
-    private readonly speedDropWeight = 0.55
+    private readonly speedDropWeight = 0.45
+    private readonly shieldDropWeight = 0.15
     private readonly maxActivePowerUps = 3
 
     constructor() {
@@ -63,6 +66,7 @@ export class GameScene extends Phaser.Scene {
         this.load.svg("powerup-life", "/powerup-life.svg")
         this.load.svg("powerup-speed", "/powerup-speed.svg")
         this.load.svg("powerup-weapon", "/powerup-weapon.svg")
+        this.load.svg("powerup-shield", "/powerup-shield.svg")
     }
 
     create() {
@@ -75,6 +79,7 @@ export class GameScene extends Phaser.Scene {
         this.weaponBoostResetEvent = undefined
         this.speedBoostMultiplier = 1
         this.weaponBoostMultiplier = 1
+        this.shieldCharges = 0
         this.lastShotAt = -Infinity
         this.isGameStarted = false
         this.isPaused = false
@@ -91,6 +96,7 @@ export class GameScene extends Phaser.Scene {
         this.player = new Player(this, 320, 0)
         this.player.y = this.playAreaHeight - this.player.displayHeight / 2 + 1
         this.addEntity(this.player)
+        this.createShieldRing()
         this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
 
         this.livesText = this.add.text(24, this.playAreaHeight + 18, "", {
@@ -134,6 +140,7 @@ export class GameScene extends Phaser.Scene {
         this.speedBoostText.setVisible(false)
         this.updateHud()
         this.updatePowerUpHud()
+        this.updateShieldVisual()
 
         this.spawnSystem = new SpawnSystem(this)
         this.systemsList.push(this.spawnSystem)
@@ -142,6 +149,7 @@ export class GameScene extends Phaser.Scene {
 
     update(_time: number, delta: number) {
         this.updatePowerUpHud()
+        this.updateShieldVisual()
 
         if (!this.isGameStarted || this.gameState.isGameOver || this.isPaused) {
             return
@@ -168,6 +176,7 @@ export class GameScene extends Phaser.Scene {
         this.handleGroundHits()
         this.handlePowerUpBounds()
         this.cleanupEntities()
+        this.updateShieldVisual()
     }
 
     addEntity(entity: BaseEntity) {
@@ -295,6 +304,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     private loseLife() {
+        if (this.absorbShieldHit()) {
+            return
+        }
+
         this.playLifeLostExplosionSound()
         this.gameState.lives -= 1
         this.updateHud()
@@ -406,6 +419,37 @@ export class GameScene extends Phaser.Scene {
         )
             .setStrokeStyle(1, 0x67e8f9, 0.35)
             .setDepth(40)
+    }
+
+    private createShieldRing() {
+        this.shieldArcGraphics = this.add.graphics().setDepth(35)
+    }
+
+    private updateShieldVisual() {
+        if (!this.shieldArcGraphics || !this.player) {
+            return
+        }
+
+        this.shieldArcGraphics.clear()
+
+        if (this.shieldCharges <= 0) {
+            return
+        }
+
+        const radius = Math.max(this.player.displayWidth * 0.62, 22)
+        const innerRadius = Math.max(radius - 4, 8)
+        const startAngle = Phaser.Math.DegToRad(205)
+        const endAngle = Phaser.Math.DegToRad(335)
+
+        this.shieldArcGraphics.lineStyle(4, 0x7dd3fc, 0.95)
+        this.shieldArcGraphics.beginPath()
+        this.shieldArcGraphics.arc(this.player.x, this.player.y, radius, startAngle, endAngle, false)
+        this.shieldArcGraphics.strokePath()
+
+        this.shieldArcGraphics.lineStyle(2, 0x38bdf8, 0.55)
+        this.shieldArcGraphics.beginPath()
+        this.shieldArcGraphics.arc(this.player.x, this.player.y, innerRadius, startAngle, endAngle, false)
+        this.shieldArcGraphics.strokePath()
     }
 
     private createNewGameButton() {
@@ -601,6 +645,10 @@ export class GameScene extends Phaser.Scene {
 
         const activePowerUps: string[] = []
 
+        if (this.shieldCharges > 0) {
+            activePowerUps.push(`H x${this.shieldCharges}`)
+        }
+
         if (this.speedBoostResetEvent) {
             activePowerUps.push(`S x${this.speedBoostMultiplier} ${this.formatRemainingSeconds(this.speedBoostResetEvent)}`)
         }
@@ -656,6 +704,8 @@ export class GameScene extends Phaser.Scene {
             ? "L"
             : roll < this.lifeDropWeight + this.speedDropWeight
                 ? "S"
+                : roll < this.lifeDropWeight + this.speedDropWeight + this.shieldDropWeight
+                    ? "H"
                 : "W"
         this.addEntity(new PowerUp(this, x, y, powerUpType))
     }
@@ -681,6 +731,14 @@ export class GameScene extends Phaser.Scene {
                 this.speedBoostResetEvent = undefined
                 this.updatePowerUpHud()
             })
+            this.updatePowerUpHud()
+            return
+        }
+
+        if (powerUpType === "H") {
+            this.playPowerUpSound("H")
+            this.shieldCharges += 1
+            this.updateShieldVisual()
             this.updatePowerUpHud()
             return
         }
@@ -798,6 +856,20 @@ export class GameScene extends Phaser.Scene {
                 endFrequency: 1360,
                 endGain: 0.0001,
                 duration: 0.16
+            })
+            return
+        }
+
+        if (powerUpType === "H") {
+            this.playTone("triangle", 620, 0.024, {
+                endFrequency: 980,
+                endGain: 0.0001,
+                duration: 0.16
+            })
+            this.playTone("sine", 920, 0.014, {
+                endFrequency: 1360,
+                endGain: 0.0001,
+                duration: 0.2
             })
             return
         }
@@ -947,6 +1019,22 @@ export class GameScene extends Phaser.Scene {
             width,
             height
         )
+    }
+
+    private absorbShieldHit() {
+        if (this.shieldCharges <= 0) {
+            return false
+        }
+
+        this.shieldCharges -= 1
+        this.playTone("sawtooth", 260, 0.03, {
+            endFrequency: 120,
+            endGain: 0.0001,
+            duration: 0.2
+        })
+        this.updateShieldVisual()
+        this.updatePowerUpHud()
+        return true
     }
 
     private cleanupEntities() {

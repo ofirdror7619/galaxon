@@ -1,6 +1,6 @@
 import { BaseEntity } from "./BaseEntity"
 
-export type PowerUpType = "L" | "S" | "W"
+export type PowerUpType = "L" | "S" | "W" | "H"
 
 export class PowerUp extends BaseEntity {
   readonly powerUpType: PowerUpType
@@ -11,7 +11,9 @@ export class PowerUp extends BaseEntity {
       ? "powerup-life"
       : powerUpType === "S"
         ? "powerup-speed"
-        : "powerup-weapon"
+        : powerUpType === "W"
+          ? "powerup-weapon"
+          : "powerup-shield"
     super(scene, x, y, texture)
     this.powerUpType = powerUpType
     this.setScale(0.35)
