@@ -16,11 +16,12 @@ export class GameScene extends Phaser.Scene {
     private gameState = new GameState()
     private player!: Player
     private entities: BaseEntity[] = []
-    private readonly panelHeight = 90
+    private readonly panelHeight = 130
     private playAreaHeight = 0
     private livesText!: Phaser.GameObjects.Text
     private scoreText!: Phaser.GameObjects.Text
     private levelText!: Phaser.GameObjects.Text
+    private powerUpTimersText!: Phaser.GameObjects.Text
     private speedBoostText!: Phaser.GameObjects.Text
     private pauseButtonText!: Phaser.GameObjects.Text
     private soundButtonText!: Phaser.GameObjects.Text
@@ -110,6 +111,11 @@ export class GameScene extends Phaser.Scene {
             fontSize: "22px",
             color: "#e2e8f0"
         }).setOrigin(1, 0)
+        this.powerUpTimersText = this.add.text(this.scale.width / 2, this.playAreaHeight + 88, "", {
+            fontFamily: "Orbitron, monospace",
+            fontSize: "15px",
+            color: "#67e8f9"
+        }).setOrigin(0.5, 0)
         this.speedBoostText = this.add.text(this.scale.width / 2, this.playAreaHeight - 26, "SPEED x2", {
             fontFamily: "Orbitron, monospace",
             fontSize: "28px",
@@ -127,6 +133,7 @@ export class GameScene extends Phaser.Scene {
         }).setOrigin(0.5, 1)
         this.speedBoostText.setVisible(false)
         this.updateHud()
+        this.updatePowerUpHud()
 
         this.spawnSystem = new SpawnSystem(this)
         this.systemsList.push(this.spawnSystem)
@@ -134,6 +141,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     update(_time: number, delta: number) {
+        this.updatePowerUpHud()
+
         if (!this.isGameStarted || this.gameState.isGameOver || this.isPaused) {
             return
         }
@@ -400,7 +409,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private createNewGameButton() {
-        const button = this.add.text(this.scale.width / 2, this.playAreaHeight + 52, "New Game", {
+        const button = this.add.text(this.scale.width / 2, this.playAreaHeight + 48, "New Game", {
             fontFamily: "Orbitron, monospace",
             fontSize: "18px",
             color: "#e2e8f0",
@@ -421,7 +430,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private createPauseButton() {
-        this.pauseButtonText = this.add.text(this.scale.width / 2 - 165, this.playAreaHeight + 52, "Pause Game", {
+        this.pauseButtonText = this.add.text(this.scale.width / 2 - 165, this.playAreaHeight + 48, "Pause Game", {
             fontFamily: "Orbitron, monospace",
             fontSize: "18px",
             color: "#e2e8f0",
@@ -442,7 +451,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     private createSoundButton() {
-        this.soundButtonText = this.add.text(this.scale.width / 2 + 165, this.playAreaHeight + 52, "Sound: On", {
+        this.soundButtonText = this.add.text(this.scale.width / 2 + 165, this.playAreaHeight + 48, "Sound: On", {
             fontFamily: "Orbitron, monospace",
             fontSize: "18px",
             color: "#e2e8f0",
@@ -583,6 +592,31 @@ export class GameScene extends Phaser.Scene {
         this.levelText.setText(`LEVEL: ${level}`)
     }
 
+    private updatePowerUpHud() {
+        if (!this.powerUpTimersText) {
+            return
+        }
+
+        this.powerUpTimersText.setY(this.playAreaHeight + 88)
+
+        const activePowerUps: string[] = []
+
+        if (this.speedBoostResetEvent) {
+            activePowerUps.push(`S x${this.speedBoostMultiplier} ${this.formatRemainingSeconds(this.speedBoostResetEvent)}`)
+        }
+
+        if (this.weaponBoostResetEvent) {
+            activePowerUps.push(`W x${this.weaponBoostMultiplier} ${this.formatRemainingSeconds(this.weaponBoostResetEvent)}`)
+        }
+
+        this.powerUpTimersText.setText(activePowerUps.length > 0 ? `POWERUPS: ${activePowerUps.join("  |  ")}` : "POWERUPS: -")
+    }
+
+    private formatRemainingSeconds(event: Phaser.Time.TimerEvent) {
+        const seconds = Math.max(0, Math.ceil(event.getRemaining() / 1000))
+        return `${seconds}s`
+    }
+
     private createExplosion(x: number, y: number) {
         const explosion = this.add.image(x, y, "explosion")
         explosion.setScale(0.25)
@@ -640,22 +674,26 @@ export class GameScene extends Phaser.Scene {
             this.player.setSpeedMultiplier(this.speedBoostMultiplier)
             this.showSpeedBoostText()
             this.speedBoostResetEvent?.remove(false)
-            this.speedBoostResetEvent = this.time.delayedCall(5000, () => {
+            this.speedBoostResetEvent = this.time.delayedCall(6000, () => {
                 this.speedBoostMultiplier = 1
                 this.player.setSpeedMultiplier(1)
                 this.hideSpeedBoostText()
                 this.speedBoostResetEvent = undefined
+                this.updatePowerUpHud()
             })
+            this.updatePowerUpHud()
             return
         }
 
         this.playPowerUpSound("W")
         this.weaponBoostMultiplier *= 2
         this.weaponBoostResetEvent?.remove(false)
-        this.weaponBoostResetEvent = this.time.delayedCall(8000, () => {
+        this.weaponBoostResetEvent = this.time.delayedCall(9000, () => {
             this.weaponBoostMultiplier = 1
             this.weaponBoostResetEvent = undefined
+            this.updatePowerUpHud()
         })
+        this.updatePowerUpHud()
     }
 
     private showSpeedBoostText() {
