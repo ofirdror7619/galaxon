@@ -26,6 +26,14 @@ export class GameScene extends Phaser.Scene {
     private soundButtonText!: Phaser.GameObjects.Text
     private countdownText?: Phaser.GameObjects.Text
     private pauseText?: Phaser.GameObjects.Text
+    private starFieldGraphics!: Phaser.GameObjects.Graphics
+    private starField: Array<{
+        x: number
+        y: number
+        radius: number
+        alpha: number
+        speed: number
+    }> = []
     private spaceKey!: Phaser.Input.Keyboard.Key
     private speedBoostResetEvent?: Phaser.Time.TimerEvent
     private weaponBoostResetEvent?: Phaser.Time.TimerEvent
@@ -129,6 +137,8 @@ export class GameScene extends Phaser.Scene {
         if (!this.isGameStarted || this.gameState.isGameOver || this.isPaused) {
             return
         }
+
+        this.updateStarField(delta)
 
         this.handleShooting()
 
@@ -329,26 +339,43 @@ export class GameScene extends Phaser.Scene {
             0x020617
         ).setDepth(-100)
 
-        const stars = this.add.graphics().setDepth(-90)
+        this.starFieldGraphics = this.add.graphics().setDepth(-90)
+        this.starField = []
 
-        for (let index = 0; index < 80; index += 1) {
-            const x = Phaser.Math.Between(8, this.scale.width - 8)
-            const y = Phaser.Math.Between(8, this.playAreaHeight - 8)
-            const radius = Phaser.Math.FloatBetween(0.8, 2.1)
-            const alpha = Phaser.Math.FloatBetween(0.12, 0.28)
+        for (let index = 0; index < 90; index += 1) {
+            this.starField.push({
+                x: Phaser.Math.Between(8, this.scale.width - 8),
+                y: Phaser.Math.Between(0, this.playAreaHeight),
+                radius: Phaser.Math.FloatBetween(0.8, 2.1),
+                alpha: Phaser.Math.FloatBetween(0.12, 0.28),
+                speed: Phaser.Math.FloatBetween(28, 92)
+            })
+        }
 
-            stars.fillStyle(0xe2e8f0, alpha)
-            stars.fillCircle(x, y, radius)
+        this.drawStarField()
+    }
 
-            if (Math.random() < 0.25) {
-                stars.lineStyle(1, 0x93c5fd, alpha * 0.8)
-                stars.beginPath()
-                stars.moveTo(x - 3, y)
-                stars.lineTo(x + 3, y)
-                stars.moveTo(x, y - 3)
-                stars.lineTo(x, y + 3)
-                stars.strokePath()
+    private updateStarField(delta: number) {
+        const dt = delta / 1000
+
+        for (const star of this.starField) {
+            star.y += star.speed * dt
+
+            if (star.y > this.playAreaHeight + 3) {
+                star.y = -3
+                star.x = Phaser.Math.Between(8, this.scale.width - 8)
             }
+        }
+
+        this.drawStarField()
+    }
+
+    private drawStarField() {
+        this.starFieldGraphics.clear()
+
+        for (const star of this.starField) {
+            this.starFieldGraphics.fillStyle(0xe2e8f0, star.alpha)
+            this.starFieldGraphics.fillCircle(star.x, star.y, star.radius)
         }
     }
 
