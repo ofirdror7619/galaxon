@@ -404,6 +404,7 @@ export class GameScene extends Phaser.Scene {
             fontFamily: "Orbitron, monospace",
             fontSize: "18px",
             color: "#e2e8f0",
+            align: "center",
             backgroundColor: "#1e293b",
             padding: {
                 left: 10,
@@ -411,7 +412,7 @@ export class GameScene extends Phaser.Scene {
                 top: 4,
                 bottom: 4
             }
-        }).setOrigin(0.5, 0)
+        }).setFixedSize(170, 32).setOrigin(0.5, 0)
 
         button.setInteractive({ useHandCursor: true })
         button.on("pointerover", () => button.setStyle({ backgroundColor: "#334155" }))
@@ -424,6 +425,7 @@ export class GameScene extends Phaser.Scene {
             fontFamily: "Orbitron, monospace",
             fontSize: "18px",
             color: "#e2e8f0",
+            align: "center",
             backgroundColor: "#1e293b",
             padding: {
                 left: 10,
@@ -431,7 +433,7 @@ export class GameScene extends Phaser.Scene {
                 top: 4,
                 bottom: 4
             }
-        }).setOrigin(0.5, 0)
+        }).setFixedSize(170, 32).setOrigin(0.5, 0)
 
         this.pauseButtonText.setInteractive({ useHandCursor: true })
         this.pauseButtonText.on("pointerover", () => this.pauseButtonText.setStyle({ backgroundColor: "#334155" }))
@@ -444,6 +446,7 @@ export class GameScene extends Phaser.Scene {
             fontFamily: "Orbitron, monospace",
             fontSize: "18px",
             color: "#e2e8f0",
+            align: "center",
             backgroundColor: "#1e293b",
             padding: {
                 left: 10,
@@ -451,7 +454,7 @@ export class GameScene extends Phaser.Scene {
                 top: 4,
                 bottom: 4
             }
-        }).setOrigin(0.5, 0)
+        }).setFixedSize(170, 32).setOrigin(0.5, 0)
 
         this.soundButtonText.setInteractive({ useHandCursor: true })
         this.soundButtonText.on("pointerover", () => this.soundButtonText.setStyle({ backgroundColor: "#334155" }))
